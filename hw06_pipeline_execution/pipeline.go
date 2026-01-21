@@ -25,7 +25,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 					case <-done:
 						return
 					}
-				case _, _ = <-done:
+				case <-done:
 					return
 				}
 			}
@@ -50,10 +50,10 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 				}
 				select {
 				case result <- val:
-				case _, _ = <-done:
+				case <-done:
 					return
 				}
-			case _, _ = <-done:
+			case <-done:
 				return
 			}
 		}
