@@ -16,12 +16,13 @@ linters-settings:
           - "!$test"
         allow:
           - $gostd
+          - github.com/cheggaaa/pb/v3
       Test:
         files:
           - $test
         allow:
           - $gostd
-          - github.com/stretchr/testify
+          - github.com/stretchr/testify          
 issues:
   exclude-rules:
     - path: _test\.go
