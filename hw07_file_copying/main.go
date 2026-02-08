@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 )
 
 var (
@@ -18,5 +20,28 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+	// Определить длину файла
+	fileInfo, err := os.Stat(from)
+	if err != nil {
+		fmt.Println("Ошибка получения информации о файле:", err)
+		return
+	}
+	// определить задавались ли параметры offset и limit
+	provided := make(map[string]bool)
+
+	flag.Visit(func(f *flag.Flag) {
+		provided[f.Name] = true
+	})
+
+	if !provided["limit"] {
+		limit = fileInfo.Size()
+	}
+	if !provided["offset"] {
+		offset = 0
+	}
+
+	err = Copy(from, to, offset, limit)
+	if err != nil {
+		fmt.Println("Ошибка копирования:", err)
+	}
 }
