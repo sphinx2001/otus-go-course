@@ -1,0 +1,28 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Go (Delve)",
+    "adapter": "Delve",
+    "program": ".",
+    "request": "launch",
+    "mode": "debug",
+    "args": [
+      "/home/sphinx/repos/otus-go-course/hw08_envdir_tool/testdata/env",
+      "/bin/bash",
+      "/home/sphinx/repos/otus-go-course/hw08_envdir_tool/testdata/echo.sh",
+      "arg1=1",
+      "arg2=2",
+    ],
+    "env": {
+      "HELLO": "SHOULD_REPLACE",
+      "FOO": "SHOULD_REPLACE",
+      "UNSET": "SHOULD_REMOVE",
+      "ADDED": "from original env",
+      "EMPTY": "SHOULD_BE_EMPTY",
+    },
+    "cwd": "/home/sphinx/repos/otus-go-course/hw08_envdir_tool",
+  },
+]

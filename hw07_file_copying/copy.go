@@ -41,9 +41,12 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	bar := pb.Full.Start64(limit)
 	barReader := bar.NewProxyReader(limitReader)
 
-	writer, err := os.OpenFile(toPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666)
+	writer, err := os.OpenFile(toPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
+	}
+	if limit < 0 {
+
 	}
 
 	defer writer.Close()
