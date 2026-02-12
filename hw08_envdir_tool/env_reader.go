@@ -14,3 +14,12 @@ func ReadDir(dir string) (Environment, error) {
 	// Place your code here
 	return nil, nil
 }
+
+func PrepareEnv(env Environment) []string {
+	if env == nil {
+		return nil
+	}
+
+	result := make([]string, 0, len(env))
+	return result
+}
