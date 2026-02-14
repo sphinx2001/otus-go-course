@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	args := os.Args[1:]
 	if len(args) == 0 {
 		fmt.Println("Empty args...")
@@ -20,6 +19,7 @@ func main() {
 		fmt.Printf("ReadDir error: %v\n", err.Error()+"\n")
 		return
 	}
+	fmt.Println(envs)
 
 	args = args[1:]
 	cmd := exec.Command(args[0], args[1:]...)
