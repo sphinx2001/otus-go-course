@@ -2,10 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"strings"
 )
 
 func main() {
@@ -19,16 +16,6 @@ func main() {
 		fmt.Printf("ReadDir error: %v\n", err.Error()+"\n")
 		return
 	}
-	fmt.Println(envs)
 
-	args = args[1:]
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Env = []string{}
-	var out strings.Builder
-	cmd.Stdout = &out
-	err = cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(out.String())
+	os.Exit(RunCmd(args[1:], envs))
 }
