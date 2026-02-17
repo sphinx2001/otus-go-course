@@ -12,9 +12,16 @@ tasks:
       - go build -o bin/hw08_envdir_tool .
 
   test:
-    desc: Run tests
+    desc: Run test with test.sh
     cmds:
       - ./test.sh
+
+  tests:
+    desc: Run go tests
+    cmds:
+      - go test -v ./...
+      - go test -v -cover ./...
+
   local-test:
     desc: Build and run ls -la
     cmds:
