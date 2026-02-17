@@ -6,6 +6,66 @@ import (
 	"testing"
 )
 
+// --- Helper functions for TestReadDir ---
+
+func checkValidDirectory(t *testing.T, env Environment) {
+	t.Helper()
+	if len(env) == 0 {
+		t.Error("Expected non-empty environment")
+	}
+	if v, ok := env["HELLO"]; ok {
+		if v.Value != `"hello"` {
+			t.Errorf("HELLO: expected '\"hello\"', got '%s'", v.Value)
+		}
+	}
+	if v, ok := env["UNSET"]; ok {
+		if !v.NeedRemove {
+			t.Error("UNSET should have NeedRemove=true")
+		}
+	}
+}
+
+func checkEmptyDirectory(t *testing.T, env Environment) {
+	t.Helper()
+	if len(env) != 0 {
+		t.Errorf("Expected empty environment, got %d items", len(env))
+	}
+}
+
+// --- Helper functions for TestPrepareEnv ---
+
+func checkNonZeroEnv(t *testing.T, result []string) {
+	t.Helper()
+	if len(result) == 0 {
+		t.Error("Expected non-zero environment variables")
+	}
+}
+
+func checkTestVarExists(t *testing.T, result []string) {
+	t.Helper()
+	found := false
+	for _, v := range result {
+		if v == "TEST_VAR=test_value" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("TEST_VAR not found in prepared environment")
+	}
+}
+
+func checkRemoveMeAbsent(t *testing.T, result []string) {
+	t.Helper()
+	for _, v := range result {
+		if len(v) > 9 && v[:9] == "REMOVE_ME" {
+			t.Error("REMOVE_ME should not be in prepared environment")
+		}
+	}
+}
+
+// --- Tests ---
+
 func TestReadDir(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -17,22 +77,7 @@ func TestReadDir(t *testing.T) {
 			name:    "valid directory",
 			dir:     "./testdata/env",
 			wantErr: false,
-			check: func(t *testing.T, env Environment) {
-				if len(env) == 0 {
-					t.Error("Expected non-empty environment")
-				}
-				// Проверка конкретных переменных
-				if v, ok := env["HELLO"]; ok {
-					if v.Value != `"hello"` {
-						t.Errorf("HELLO: expected '\"hello\"', got '%s'", v.Value)
-					}
-				}
-				if v, ok := env["UNSET"]; ok {
-					if !v.NeedRemove {
-						t.Error("UNSET should have NeedRemove=true")
-					}
-				}
-			},
+			check:   checkValidDirectory,
 		},
 		{
 			name:    "non-existent directory",
@@ -44,11 +89,7 @@ func TestReadDir(t *testing.T) {
 			name:    "empty directory",
 			dir:     t.TempDir(),
 			wantErr: false,
-			check: func(t *testing.T, env Environment) {
-				if len(env) != 0 {
-					t.Errorf("Expected empty environment, got %d items", len(env))
-				}
-			},
+			check:   checkEmptyDirectory,
 		},
 	}
 
@@ -116,7 +157,7 @@ func TestReadValue(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filePath := filepath.Join(tmpDir, tt.name)
-			err := os.WriteFile(filePath, tt.content, 0644)
+			err := os.WriteFile(filePath, tt.content, 0o644)
 			if err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
 			}
@@ -140,45 +181,23 @@ func TestPrepareEnv(t *testing.T) {
 		checkLen func(t *testing.T, result []string)
 	}{
 		{
-			name: "empty environment",
-			env:  Environment{},
-			checkLen: func(t *testing.T, result []string) {
-				// Должно содержать хотя бы системные переменные
-				if len(result) == 0 {
-					t.Error("Expected non-zero environment variables")
-				}
-			},
+			name:     "empty environment",
+			env:      Environment{},
+			checkLen: checkNonZeroEnv,
 		},
 		{
 			name: "with custom variables",
 			env: Environment{
 				"TEST_VAR": {Value: "test_value", NeedRemove: false},
 			},
-			checkLen: func(t *testing.T, result []string) {
-				found := false
-				for _, v := range result {
-					if v == "TEST_VAR=test_value" {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Error("TEST_VAR not found in prepared environment")
-				}
-			},
+			checkLen: checkTestVarExists,
 		},
 		{
 			name: "NeedRemove flag",
 			env: Environment{
 				"REMOVE_ME": {Value: "", NeedRemove: true},
 			},
-			checkLen: func(t *testing.T, result []string) {
-				for _, v := range result {
-					if len(v) > 9 && v[:9] == "REMOVE_ME" {
-						t.Error("REMOVE_ME should not be in prepared environment")
-					}
-				}
-			},
+			checkLen: checkRemoveMeAbsent,
 		},
 	}
 
@@ -189,5 +208,39 @@ func TestPrepareEnv(t *testing.T) {
 				tt.checkLen(t, result)
 			}
 		})
+	}
+}
+
+// Additional test to ensure PrepareEnv handles nil correctly.
+func TestPrepareEnvNil(t *testing.T) {
+	result := PrepareEnv(nil)
+	if result != nil {
+		t.Error("PrepareEnv(nil) should return nil")
+	}
+}
+
+// Test to verify environment variable precedence.
+func TestPrepareEnvOverride(t *testing.T) {
+	// Save original env
+	orig := os.Getenv("TEST_OVERRIDE_VAR")
+	defer os.Setenv("TEST_OVERRIDE_VAR", orig)
+
+	os.Setenv("TEST_OVERRIDE_VAR", "original_value")
+
+	env := Environment{
+		"TEST_OVERRIDE_VAR": {Value: "new_value", NeedRemove: false},
+	}
+
+	result := PrepareEnv(env)
+
+	found := false
+	for _, v := range result {
+		if v == "TEST_OVERRIDE_VAR=new_value" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Custom env should override original env")
 	}
 }
