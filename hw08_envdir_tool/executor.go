@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
-	"strings"
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
@@ -13,12 +13,12 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	preparedEnvs := PrepareEnv(env)
 
 	command.Env = preparedEnvs
-	var out strings.Builder
-	command.Stdout = &out
+	command.Stdin = os.Stdin   // Пробрасываем ввод
+	command.Stdout = os.Stdout // Пробрасываем вывод
+	command.Stderr = os.Stderr // Пробрасываем ошибки
 	err := command.Run()
 	if err != nil {
 		fmt.Println("Exit code:", err)
 	}
-	fmt.Println(out.String())
 	return command.ProcessState.ExitCode()
 }
