@@ -1,0 +1,26 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list-all
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+      - go build .
+  tests:
+    desc: Run go tests
+    cmds:
+      - go test -v ./...
+      - go test -v -cover ./...
+
+  lint:
+    desc: Run lints...
+    cmds:
+      - golangci-lint run .
+  fmt:
+    desc: Run fmt with gofumpt
+    cmds:
+      - gofumpt -d -e -l -w .
