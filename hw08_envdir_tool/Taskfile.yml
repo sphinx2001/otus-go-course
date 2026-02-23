@@ -1,0 +1,39 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list-all
+  build:
+    desc: Build the project
+    cmds:
+      - echo "Building..."
+      - go build -o bin/hw08_envdir_tool .
+
+  test:
+    desc: Run test with test.sh
+    cmds:
+      - ./test.sh
+
+  tests:
+    desc: Run go tests
+    cmds:
+      - go test -v ./...
+      - go test -v -cover ./...
+
+  local-test:
+    desc: Build and run ls -la
+    cmds:
+      - go build -o bin/hw08_envdir_tool .
+      - ./bin/hw08_envdir_tool ./testdata/env ls -la .
+      - echo "Cleaninig"
+      - rm -rf ./bin/*
+  lint:
+    desc: Run lints...
+    cmds:
+      - golangci-lint run .
+  fmt:
+    desc: Run fmt with gofumpt
+    cmds:
+      - gofumpt -d -e -l -w .
